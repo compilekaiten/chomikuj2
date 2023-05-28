@@ -2,53 +2,40 @@
 
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
-use Chomikuj\Api;
 use Chomikuj\Exception\ChomikujException;
-use GuzzleHttp\Client;
-use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Middleware;
+use PHPUnit\Framework\TestCase;
 
-require_once(__DIR__ . '/FakeApiFactory.php');
+require_once __DIR__ . '/FakeApiFactory.php';
 
-final class ApiSearchTest extends TestCase
-{
-    public function testSearchSendsProperFieldsInMinimumCase(): void
-    {
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class ApiSearchTest extends TestCase {
+    public function testSearchSendsProperFieldsInMinimumCase(): void {
         $container = [];
-        $api = FakeApiFactory::getApi(
-            null,
-            [
-                new Response(200, [], 'no results'),
-            ],
-            $container
-        );
+        $api = FakeApiFactory::getApi(NULL, [
+            new Response(200, [], 'no results'),
+        ], $container);
 
         $fileName = 'some filename';
 
         $api->findFiles($fileName);
 
-        parse_str($container[0]['request']->getBody()->getContents(), $receivedFields);
+        parse_str((string) $container[0]['request']->getBody()->getContents(), $receivedFields);
 
         $this->assertEquals(0, $receivedFields['IsGallery']);
         $this->assertEquals(1, $receivedFields['Page']);
         $this->assertEquals($fileName, $receivedFields['FileName']);
     }
 
-    public function testSearchSendsProperFieldsInMaximumCase(): void
-    {
+    public function testSearchSendsProperFieldsInMaximumCase(): void {
         $container = [];
-        $api = FakeApiFactory::getApi(
-            null,
-            [
-                new Response(200, [], 'no results'),
-            ],
-            $container
-        );
+        $api = FakeApiFactory::getApi(NULL, [
+            new Response(200, [], 'no results'),
+        ], $container);
 
         $page = 23;
         $fileName = 'some file name';
@@ -67,10 +54,10 @@ final class ApiSearchTest extends TestCase
             'Extension' => $extension,
             'ShowAdultContent' => $adult,
             'SearchOnAccount' => $onAccount,
-            'TargetAccountName' => $username
+            'TargetAccountName' => $username,
         ], $page);
 
-        parse_str($container[0]['request']->getBody()->getContents(), $receivedFields);
+        parse_str((string) $container[0]['request']->getBody()->getContents(), $receivedFields);
 
         $this->assertEquals(0, $receivedFields['IsGallery']);
         $this->assertEquals($page, $receivedFields['Page']);
@@ -84,28 +71,20 @@ final class ApiSearchTest extends TestCase
         $this->assertEquals($username, $receivedFields['TargetAccountName']);
     }
 
-    public function testSearchThrowsExceptionOnBadRequestResponse(): void
-    {
-        $api = FakeApiFactory::getApi(
-            null,
-            [
-                new Response(400),
-            ]
-        );
+    public function testSearchThrowsExceptionOnBadRequestResponse(): void {
+        $api = FakeApiFactory::getApi(NULL, [
+            new Response(400),
+        ]);
 
         $this->expectException(ChomikujException::class);
         $api->findFiles('some file', [], 1);
     }
 
-    public function testSearchThrowsExceptionOnMalformedResponse(): void
-    {
-        $api = FakeApiFactory::getApi(
-            null,
-            [
-                // a row with no file data
-                new Response(200, [], '...<div id="listView"><div class="filerow alt fileItemContainer"></div></div>...'),
-            ]
-        );
+    public function testSearchThrowsExceptionOnMalformedResponse(): void {
+        $api = FakeApiFactory::getApi(NULL, [
+            // a row with no file data
+            new Response(200, [], '...<div id="listView"><div class="filerow alt fileItemContainer"></div></div>...'),
+        ]);
 
         $this->expectException(ChomikujException::class);
         $api->findFiles('some file', [], 1);

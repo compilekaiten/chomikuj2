@@ -2,4 +2,5 @@
 
 namespace Chomikuj\Exception;
 
-class ChomikujException extends \Exception {}
+class ChomikujException extends \Exception {
+}
